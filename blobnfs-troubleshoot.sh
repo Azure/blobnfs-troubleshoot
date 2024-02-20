@@ -12,11 +12,13 @@ if [[ $# != 2 ]]; then
     exit 1
 fi
 
+filepath="/tmp/ubuntu-troubleshoot.sh"
 # Download the latest troubleshooting script
-wget https://raw.githubusercontent.com/Azure/blobnfs-troubleshoot/main/ubuntu-troubleshoot.sh
+echo "Downloading the latest troubleshooting script"
+wget https://raw.githubusercontent.com/Azure/blobnfs-troubleshoot/main/ubuntu-troubleshoot.sh -O $filepath
 
 # Make the script executable
-chmod +x ubuntu-troubleshoot.sh
+chmod +x $filepath
 
 # Log file
 logfile="/tmp/troubleshoot$RANDOM.log"
@@ -26,8 +28,8 @@ logfile="/tmp/troubleshoot$RANDOM.log"
 
 # Run the script
 echo "Logging to $logfile ..."
-./ubuntu-troubleshoot.sh "$1" "$2" |& tee -a $logfile
-
+$filepath "$1" "$2" |& tee -a $logfile
+echo "error code: $?"
 echo "Share the log file $logfile with the support team."
 
 # Populate absmountpoint and serverip

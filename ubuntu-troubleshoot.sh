@@ -60,12 +60,11 @@ esac
 echo "Platform: ${__m}:${__s}"
 echo "Distro: $distro_id"
 
-set -eu
+# set -eu
 
 # Setup
 dpkg -s httping tcptraceroute ioping tshark net-tools &> /dev/null
 if [[ $? -ne 0 ]]; then
-    echo "All the necessary tools are already installed."
     confirmation="N"
     echo -n "Installing tools such as tcping, httping, tcptraceroute, ioping, and tshark for troubleshooting. "
     echo -n "Will capture traces on port 2048 and 111 to your account endpoint. "
@@ -92,6 +91,8 @@ if [[ $? -ne 0 ]]; then
         echo "Exiting troubleshooting."
         exit 0
     fi
+
+    echo "All the necessary tools are already installed."
 fi
 
 echo "Packet drops: " $(netstat -s | grep "fast retransmits")
@@ -148,7 +149,7 @@ if [[ $(cat /sys/class/bdi/0\:$(stat -c "%d" .)/read_ahead_kb) -lt 1024 ]]; then
     read confirmation
     if [[ $confirmation == "" || $confirmation == "Y" || $confirmation == "y" ]]; then
         echo 16384 > /sys/class/bdi/0\:$(stat -c "%d" .)/read_ahead_kb
-        echo "Read ahead KB increased to 1024."
+        echo "Read ahead KB increased to 16384."
     else
         echo "Please increase the read ahead KB above 1MB and try again."
         exit 1
