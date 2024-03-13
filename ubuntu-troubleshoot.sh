@@ -9,9 +9,9 @@
 # parameter 2 => server ip address
 
 # To-do:
-# 1. Add colors to the output
-# 2. Prompt user to fix the issues
-# 3. Add support for aznfs
+# - Add colors to the output
+# - Add support for aznfs
+# - Capture only limited packets in tshark
 
 # Need super user access to certain commands
 if [ "$(id -u)" -ne 0 ]; then
