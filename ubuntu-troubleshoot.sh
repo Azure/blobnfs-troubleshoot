@@ -14,7 +14,7 @@
 # 3. Add support for aznfs
 
 # Need super user access to certain commands
-if [ $(id -u) -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "Run this script as root!"
     exit 1
 fi
@@ -95,10 +95,10 @@ if [[ $? -ne 0 ]]; then
     echo "All the necessary tools are already installed."
 fi
 
-echo "Packet drops before: " $(netstat -s | grep "fast retransmits")
+echo "Packet drops before: $(netstat -s | grep 'fast retransmits')"
 
 # Extract the account name using pattern matching
-accname=$(findmnt -t nfs --target $mountpoint | awk 'FNR == 2 { print $2 }' | awk -F '/' '{ print $2 }')
+accname=$(findmnt -t nfs --target "$mountpoint" | awk 'FNR == 2 { print $2 }' | awk -F '/' '{ print $2 }')
 if [[ $accname == "" ]]; then
     echo "No account/container mounted on the given mount point: $mountpoint. Please check the mount point!"
     exit 1
@@ -115,7 +115,7 @@ fi
 # echo "-------------------- Share the below o/p with your Azure support team. --------------------"
 
 # Change the directory to the mount point
-cd $mountpoint
+cd "$mountpoint" || { echo "Failed to change directory to $mountpoint"; exit 1; }
 
 # Create a test dir
 testdir="troubleshooting"
@@ -138,10 +138,11 @@ echo "IP Address of the endpoint: $ipaddr"
 
 # Get the mount options
 echo "Mount details:"
-echo $(findmnt -t nfs --target $mountpoint | awk 'FNR == 2 { print $4 }')
+echo findmnt -t nfs --target "$mountpoint" | awk 'FNR == 2 { print $4 }'
 
 # Mount options
-IFS=',' read -ra mountoptions <<< $(findmnt -t nfs --target $mountpoint | awk 'FNR == 2 { print $4 }')
+mountoptions=()
+IFS=',' read -ra mountoptions <<< $(findmnt -t nfs --target "$mountpoint" | awk 'FNR == 2 { print $4 }')
 
 if [[ $(cat /sys/class/bdi/0\:$(stat -c "%d" .)/read_ahead_kb) -lt 1024 ]]; then
     confirmation="N"
@@ -159,20 +160,19 @@ fi
 echo "Read ahead KB:" $(cat /sys/class/bdi/0\:$(stat -c "%d" .)/read_ahead_kb)
 
 # Read and write size in the mount options should be 1M
-if [[ ! " ${mountoptions[@]} " =~ " rsize=1048576 " ]]; then
+if [[ ! " ${mountoptions[@]} " =~ "rsize=1048576" ]]; then
     echo -n "rsize is not 1M. Please set rsize to 1M while mounting."
     exit 1
 fi
 
-if [[ ! " ${mountoptions[@]} " =~ " wsize=1048576" ]]; then
+if [[ ! " ${mountoptions[@]} " =~ "wsize=1048576" ]]; then
     echo -n "wsize is not 1M. Please set wsize to 1M while mounting."
     exit 1
 fi
 
 # Check if nconnect is used but nconnect patch is not enabled.
-if [[ (" ${mountoptions[@]} " =~ " nconnect=.* ") && (" ${mountoptions[@]} " =~ " port=2048 ") ]]; then
-    echo -n "nconnect " 
-    if [[ $(cat /sys/module/sunrpc/parameters/enable_azure_nconnect) -eq "N" ]]; then
+if [[ (" ${mountoptions[@]} " =~ nconnect=.* ) && ( ${mountoptions[@]} =~ "port=2048" ) ]]; then
+    if [[ $(cat /sys/module/sunrpc/parameters/enable_azure_nconnect) == "N" ]]; then
         confirmation="N"
         echo -n "Nconnect is used on port 2048 but the patch is not enabled. Do you want to enable nconnect patch? Enter Y/y to continue and any other key to abort. (Default: Y): "
         read confirmation
@@ -187,8 +187,8 @@ if [[ (" ${mountoptions[@]} " =~ " nconnect=.* ") && (" ${mountoptions[@]} " =~ 
     fi
 fi
 
-echo "Nconnect patch enabled:" $(cat /sys/module/sunrpc/parameters/enable_azure_nconnect)
-echo "Read scaling patch enabled:" $(cat /sys/module/sunrpc/parameters/azure_nconnect_readscaling)
+echo "Nconnect patch enabled:" "$(cat /sys/module/sunrpc/parameters/enable_azure_nconnect)"
+echo "Read scaling patch enabled:" "$(cat /sys/module/sunrpc/parameters/azure_nconnect_readscaling)"
 
 # Get the ram size, dirty ratio, and dirty background ratio
 # We need to change the VM dirty config to start flushing when there are fewer dirty pages so that there is not
@@ -203,13 +203,13 @@ cat /proc/sys/vm/dirty_ratio
 
 # Latency details
 echo "Tcping checks on port 2048:"
-date -u; tcping -x 10 $ipaddr 2048; date -u
+date -u; tcping -x 10 "$ipaddr" 2048; date -u
 
 echo "Tcping checks on port 111:"
-date -u; tcping -x 10 $ipaddr 111; date -u
+date -u; tcping -x 10 "$ipaddr" 111; date -u
 
 echo "Httping checks:" 
-date -u; httping -c 10 $ipaddr; date -u
+date -u; httping -c 10 "$ipaddr"; date -u
 
 echo "TestHook Write Ioping checks:"
 truncate -s 1G ioping.write.$randomnum
@@ -256,14 +256,14 @@ date -u; wget https://wordpress.org/latest.tar.gz &> /dev/null; date -u
 echo "Untar wordpress zip:"
 date -u; time tar -xf latest.tar.gz; date -u
 
-mountstats $mountpoint -S /tmp/mountstats.baseline
+mountstats "$mountpoint" -S /tmp/mountstats.baseline
 
 # End Tshark capture
 kill $tsharkpid
 echo "-------------------- Share the tshark capture file (in /tmp/nfscapture.pcap) if it's not large. --------------------"
 
 # Clean up the test dir
-cd $mountpoint
+cd "$mountpoint" || { echo "Failed to change directory to $mountpoint"; exit 1; }
 rm -rf $testdir
 
 echo "-------------------- Done $(date -u) --------------------"

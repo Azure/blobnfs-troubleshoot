@@ -10,7 +10,7 @@ fi
 branchname="develop"
 
 # Check for the number of parameters to the script
-if [[ $# -le 2 ]]; then
+if [[ $# -lt 2 ]]; then
     read -p "Enter the absolute mount path: " absmountpoint
     read -p "Enter the server IP: " serverip
     read -p "[Optional] Enter the branch name (default: $branchname): " branchname
@@ -22,10 +22,16 @@ if [[ $# -le 2 ]]; then
     fi
 fi
 
+branchname=$3
 filepath="/tmp/ubuntu-troubleshoot.sh"
 # Download the latest troubleshooting script
 echo "Downloading the latest troubleshooting script"
 wget "https://raw.githubusercontent.com/Azure/blobnfs-troubleshoot/$branchname/ubuntu-troubleshoot.sh" -O $filepath
+
+if [[ $? -ne 0 ]]; then
+    echo "Failed to download the troubleshooting script"
+    exit 1
+fi
 
 # Make the script executable
 chmod +x $filepath
