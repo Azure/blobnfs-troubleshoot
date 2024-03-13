@@ -95,7 +95,7 @@ if [[ $? -ne 0 ]]; then
     echo "All the necessary tools are already installed."
 fi
 
-echo "Packet drops: " $(netstat -s | grep "fast retransmits")
+echo "Packet drops before: " $(netstat -s | grep "fast retransmits")
 
 # Extract the account name using pattern matching
 accname=$(findmnt -t nfs --target $mountpoint | awk 'FNR == 2 { print $2 }' | awk -F '/' '{ print $2 }')
